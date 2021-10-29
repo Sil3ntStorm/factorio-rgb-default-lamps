@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.2.1145
+Date: 2021-10-29
+
+  Changes:
+    - Improved UPS impact
+
+  Features:
+    - Configurable refresh frequency
+
+---------------------------------------------------------------------------------------------------
+Version: 0.1.1142
+Date: 2021-10-21
+
+  Features:
+    - Allow default Factorio Lamps to be colored any color using the R, G, B Letter signals
