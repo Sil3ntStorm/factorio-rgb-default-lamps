@@ -63,6 +63,9 @@ local function onEntityDeleted(event)
 end
 
 script.on_init(function()
+    if not global.rgb_default_lamps then
+        global.rgb_default_lamps = {}
+    end
     for _, surface in pairs(game.surfaces) do
         lamps = surface.find_entities_filtered({name='small-lamp'})
         for _, lamp in pairs(lamps) do
