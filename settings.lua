@@ -19,4 +19,10 @@ data:extend({
         minimum_value = 5,
         maximum_value = 900
     },
+    {
+        name = 'rgb-default-lamps-invisSub',
+        type = 'bool-setting',
+        setting_type = 'startup',
+        default_value = false
+    },
 })
