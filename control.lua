@@ -2,43 +2,68 @@
 --
 -- Licensed under MS-RL, see https://opensource.org/licenses/MS-RL
 
-local function updateLightEntity(surface, position, r, g, b)
-    l = surface.find_entities_filtered({name='rgb-lamp-light', area={{position.x - 0.1, position.y - 0.1}, {position.x + 0.1, position.y + 0.1}}})
-    for _, fml in pairs(l) do
-        if r <= 0 and g <= 0 and b <= 0 then
-            fml.destroy()
-        else
-            fml.color = {math.max(0, math.min(255, r)), math.max(0, math.min(255, g)), math.max(0, math.min(255, b)), 255}
+require("utils.utils")
+
+local function updateLight(entry, r, g, b)
+    if r <= 0 and b <= 0 and b <= 0 then
+        if entry.light then
+            rendering.destroy(entry.light)
+            global.rgb_default_lamps[entry.lamp.unit_number].light = nil
+        end
+        if entry.glow then
+            rendering.destroy(entry.glow)
+            global.rgb_default_lamps[entry.lamp.unit_number].glow = nil
         end
         return
     end
-    if r <= 0 and g <= 0 and b <= 0 then
-        return
+    local color = {math.max(0, math.min(255, r)), math.max(0, math.min(255, g)), math.max(0, math.min(255, b))}
+    if entry.light then
+        rendering.set_color(entry.light, color)
+    else
+        entry.light = rendering.draw_light{
+            sprite = 'utility/light_small',
+            color = color,
+            target = entry.lamp,
+            surface = entry.lamp.surface,
+        }
     end
-    light = surface.create_entity{name='rgb-lamp-light', force='neutral', position=position}
-    light.color = {math.max(0, math.min(255, r)), math.max(0, math.min(255, g)), math.max(0, math.min(255, b)), 255}
+    if entry.glow then
+        rendering.set_color(entry.glow, color)
+    else
+        entry.glow = rendering.draw_sprite{
+            sprite = 'rgb-lamp-light',
+            tint = color,
+            render_layer = 'light-effect',
+            target = entry.lamp,
+            surface = entry.lamp.surface
+        }
+    end
 end
 
 local function processLamp(lamp)
+    if not lamp or not lamp.valid then
+        return
+    end
     if not lamp.is_connected_to_electric_network() then
-        updateLightEntity(lamp.surface, lamp.position, -1, -1, -1)
+        updateLight(global.rgb_default_lamps[lamp.unit_number], -1, -1, -1)
         return
     end
     if not lamp.get_circuit_network(defines.wire_type.green, defines.circuit_connector_id.lamp) and not lamp.get_circuit_network(defines.wire_type.red, defines.circuit_connector_id.lamp) then
         -- Not connected to any circuit wire
-        updateLightEntity(lamp.surface, lamp.position, -1, -1, -1)
+        updateLight(global.rgb_default_lamps[lamp.unit_number], -1, -1, -1)
         return
     end
     local r = lamp.get_merged_signal({type='virtual', name='signal-R'}, defines.circuit_connector_id.lamp)
     local g = lamp.get_merged_signal({type='virtual', name='signal-G'}, defines.circuit_connector_id.lamp)
     local b = lamp.get_merged_signal({type='virtual', name='signal-B'}, defines.circuit_connector_id.lamp)
 
-    updateLightEntity(lamp.surface, lamp.position, r, g, b)
+    updateLight(global.rgb_default_lamps[lamp.unit_number], r, g, b)
 end
 
 local function onEntityCreated(event)
     if (event.created_entity.valid and event.created_entity.name == 'small-lamp') then
-        table.insert(global.rgb_default_lamps, event.created_entity);
+        table.insert(global.rgb_default_tracked, event.created_entity.unit_number)
+        global.rgb_default_lamps[event.created_entity.unit_number] = {lamp = event.created_entity, light = nil, glow = nil}
     end
 end
 
@@ -50,15 +75,17 @@ local function onEntityDeleted(event)
 
     local destroyed_unit_name = event.entity.name
     local destroyed_unit_number = event.entity.unit_number
-    local destroyed_unit_surface = event.entity.surface
-    local destroyed_unit_position = event.entity.position
     if destroyed_unit_name == 'small-lamp' then
-        updateLightEntity(destroyed_unit_surface, destroyed_unit_position, -1, -1, -1)
-        for i = #global.rgb_default_lamps, 1, -1 do
-            if (global.rgb_default_lamps[i].unit_number == destroyed_unit_number) then
-                table.remove(global.rgb_default_lamps, i)
-            end
+        if global.rgb_default_lamps[destroyed_unit_number].light then
+            rendering.destroy(global.rgb_default_lamps[destroyed_unit_number].light)
         end
+        if global.rgb_default_lamps[destroyed_unit_number].glow then
+            rendering.destroy(global.rgb_default_lamps[destroyed_unit_number].glow)
+        end
+        global.rgb_default_lamps[destroyed_unit_number] = nil
+        ArrayRemove(global.rgb_default_tracked, function(t,i,j)
+            return t[i] ~= destroyed_unit_number
+        end)
     end
 end
 
@@ -66,15 +93,18 @@ script.on_init(function()
     if not global.rgb_default_lamps then
         global.rgb_default_lamps = {}
     end
+    if not global.rgb_default_tracked then
+        global.rgb_default_tracked = {}
+    end
     for _, surface in pairs(game.surfaces) do
         lamps = surface.find_entities_filtered({name='small-lamp'})
         for _, lamp in pairs(lamps) do
-            table.insert(global.rgb_default_lamps, lamp)
+            table.insert(global.rgb_default_tracked, lamp.unit_number)
+            global.rgb_default_lamps[lamp.unit_number] = {lamp = lamp, light = nil, glow = nil}
         end
     end
-    log('Tracking ' .. #global.rgb_default_lamps .. ' lamps')
-end
-)
+    log('Tracking ' .. #global.rgb_default_lamps .. ' existing lamps')
+end)
 
 script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, onEntityDeleted)
 script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity}, onEntityCreated);
@@ -83,14 +113,23 @@ script.on_event(defines.events.on_tick, function(event)
     if event.tick % settings.global['rgb-default-lamps-nthTick'].value > 0 then
         return
     end
+    -- this should've already happened / been initialized by migration / on_init...
+    -- But the game doesn't seem to run those (or not before on_tick), so we'll do this again here...
+    if not global.rgb_default_lamps then
+        global.rgb_default_lamps = {}
+    end
+    if not global.rgb_default_tracked then
+        global.rgb_default_tracked = {}
+    end
     local lastIt = global.rgb_default_lamps_last or 1
-    local target = math.min(#global.rgb_default_lamps, lastIt + settings.global['rgb-default-lamps-perTick'].value)
-
+    local target = math.min(#global.rgb_default_tracked, lastIt + settings.global['rgb-default-lamps-perTick'].value)
     for i = lastIt, target, 1 do
-        processLamp(global.rgb_default_lamps[i])
+        if global.rgb_default_lamps[global.rgb_default_tracked[i]] then
+            processLamp(global.rgb_default_lamps[global.rgb_default_tracked[i]].lamp)
+        end
     end
     target = target + 1
-    if target >= #global.rgb_default_lamps then
+    if target >= #global.rgb_default_tracked then
         target = 1
     end
     global.rgb_default_lamps_last = target
