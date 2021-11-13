@@ -5,7 +5,7 @@
 require("utils.utils")
 
 local function updateLight(entry, r, g, b)
-    if r <= 0 and b <= 0 and b <= 0 then
+    if r <= 0 and g <= 0 and b <= 0 then
         if entry.light then
             rendering.destroy(entry.light)
             global.rgb_default_lamps[entry.lamp.unit_number].light = nil
@@ -25,6 +25,7 @@ local function updateLight(entry, r, g, b)
             color = color,
             target = entry.lamp,
             surface = entry.lamp.surface,
+            scale = 8
         }
     end
     if entry.glow then
@@ -35,7 +36,9 @@ local function updateLight(entry, r, g, b)
             tint = color,
             render_layer = 'light-effect',
             target = entry.lamp,
-            surface = entry.lamp.surface
+            surface = entry.lamp.surface,
+            x_scale = 1.1,
+            y_scale = 1.1
         }
     end
 end
@@ -60,10 +63,42 @@ local function processLamp(lamp)
     updateLight(global.rgb_default_lamps[lamp.unit_number], r, g, b)
 end
 
+local function initEntity(entity)
+    if not (entity and entity.valid) then
+        log('initEntity called with an invalid entity')
+        return
+    end
+    table.insert(global.rgb_default_tracked, entity.unit_number)
+    local epole = nil
+    if settings.startup['rgb-default-lamps-lampsHavePoles'].value then
+        epole = entity.surface.create_entity{
+            name = 'rgb-default-lamp-tiny-pole',
+            position = entity.position,
+            force = entity.force
+        }
+    end
+    global.rgb_default_lamps[entity.unit_number] = {lamp = entity, light = nil, glow = nil, pole = epole}
+end
+
+local function cleanupEntity(destroyed_unit_number)
+    if global.rgb_default_lamps[destroyed_unit_number].light then
+        rendering.destroy(global.rgb_default_lamps[destroyed_unit_number].light)
+    end
+    if global.rgb_default_lamps[destroyed_unit_number].glow then
+        rendering.destroy(global.rgb_default_lamps[destroyed_unit_number].glow)
+    end
+    if global.rgb_default_lamps[destroyed_unit_number].pole then
+        global.rgb_default_lamps[destroyed_unit_number].pole.destroy()
+    end
+    global.rgb_default_lamps[destroyed_unit_number] = nil
+    ArrayRemove(global.rgb_default_tracked, function(t,i,j)
+        return t[i] ~= destroyed_unit_number
+    end)
+end
+
 local function onEntityCreated(event)
     if (event.created_entity.valid and event.created_entity.name == 'small-lamp') then
-        table.insert(global.rgb_default_tracked, event.created_entity.unit_number)
-        global.rgb_default_lamps[event.created_entity.unit_number] = {lamp = event.created_entity, light = nil, glow = nil}
+        initEntity(event.created_entity)
     end
 end
 
@@ -76,16 +111,20 @@ local function onEntityDeleted(event)
     local destroyed_unit_name = event.entity.name
     local destroyed_unit_number = event.entity.unit_number
     if destroyed_unit_name == 'small-lamp' then
-        if global.rgb_default_lamps[destroyed_unit_number].light then
-            rendering.destroy(global.rgb_default_lamps[destroyed_unit_number].light)
+        cleanupEntity(destroyed_unit_number)
+    end
+end
+
+local function onSettingsChanged(data)
+    if data.mod_startup_settings_changed then
+        local copied = {}
+        for k, v in pairs(global.rgb_default_lamps) do
+            copied[k] = v
         end
-        if global.rgb_default_lamps[destroyed_unit_number].glow then
-            rendering.destroy(global.rgb_default_lamps[destroyed_unit_number].glow)
+        for _, lamp in pairs(copied) do
+            cleanupEntity(lamp.lamp.unit_number)
+            initEntity(lamp.lamp)
         end
-        global.rgb_default_lamps[destroyed_unit_number] = nil
-        ArrayRemove(global.rgb_default_tracked, function(t,i,j)
-            return t[i] ~= destroyed_unit_number
-        end)
     end
 end
 
@@ -100,7 +139,7 @@ script.on_init(function()
         lamps = surface.find_entities_filtered({name='small-lamp'})
         for _, lamp in pairs(lamps) do
             table.insert(global.rgb_default_tracked, lamp.unit_number)
-            global.rgb_default_lamps[lamp.unit_number] = {lamp = lamp, light = nil, glow = nil}
+            global.rgb_default_lamps[lamp.unit_number] = {lamp = lamp, light = nil, glow = nil, pole = nil}
         end
     end
     log('Tracking ' .. #global.rgb_default_lamps .. ' existing lamps')
@@ -108,6 +147,7 @@ end)
 
 script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, onEntityDeleted)
 script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity}, onEntityCreated);
+script.on_configuration_changed(onSettingsChanged)
 
 script.on_event(defines.events.on_tick, function(event)
     if event.tick % settings.global['rgb-default-lamps-nthTick'].value > 0 then

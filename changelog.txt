@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.7.1145
+Date: 2021-11-02
+
+  Bugfixes:
+    - Fix typo that caused the mod to not work when no green signal was present
+  Features:
+    - Add option to have lamps provide their own power. Does require at least one lamp to be next to a power pole.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.6.1145
 Date: 2021-11-01
 

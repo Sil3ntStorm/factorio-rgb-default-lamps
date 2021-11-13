@@ -16,11 +16,17 @@ data:extend({
         type = 'int-setting',
         setting_type = 'runtime-global',
         default_value = 15,
-        minimum_value = 5,
+        minimum_value = 2,
         maximum_value = 900
     },
     {
         name = 'rgb-default-lamps-invisSub',
+        type = 'bool-setting',
+        setting_type = 'startup',
+        default_value = false
+    },
+    {
+        name = 'rgb-default-lamps-lampsHavePoles',
         type = 'bool-setting',
         setting_type = 'startup',
         default_value = false
