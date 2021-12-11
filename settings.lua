@@ -20,6 +20,14 @@ data:extend({
         maximum_value = 900
     },
     {
+        name = 'rgb-default-lamps-lightSize',
+        type = 'int-setting',
+        setting_type = 'runtime-global',
+        default_value = 5,
+        minimum_value = 1,
+        maximum_value = 15
+    },
+    {
         name = 'rgb-default-lamps-invisSub',
         type = 'bool-setting',
         setting_type = 'startup',

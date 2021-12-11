@@ -4,8 +4,18 @@
 
 require("utils.utils")
 
+local function createLight(lamp)
+    return rendering.draw_light{
+        sprite = 'utility/light_small',
+        color = color,
+        target = lamp,
+        surface = lamp.surface,
+        scale = settings.global['rgb-default-lamps-lightSize'].value
+    }
+end
+
 local function updateLight(entry, r, g, b)
-    if r <= 0 and g <= 0 and b <= 0 then
+    if r <= 1 and g <= 1 and b <= 1 then
         if entry.light then
             rendering.destroy(entry.light)
             global.rgb_default_lamps[entry.lamp.unit_number].light = nil
@@ -16,17 +26,11 @@ local function updateLight(entry, r, g, b)
         end
         return
     end
-    local color = {math.max(0, math.min(255, r)), math.max(0, math.min(255, g)), math.max(0, math.min(255, b))}
+    local color = {math.max(2, math.min(255, r)), math.max(2, math.min(255, g)), math.max(2, math.min(255, b))}
     if entry.light then
         rendering.set_color(entry.light, color)
     else
-        entry.light = rendering.draw_light{
-            sprite = 'utility/light_small',
-            color = color,
-            target = entry.lamp,
-            surface = entry.lamp.surface,
-            scale = 8
-        }
+        entry.light = createLight(entry.lamp)
     end
     if entry.glow then
         rendering.set_color(entry.glow, color)
@@ -132,6 +136,27 @@ local function onSettingsChanged(data)
     end
 end
 
+local function onRTSettingChanged(event)
+    -- if strsub(event.setting, 0, 18) ~= 'rgb-default-lamps-' then
+    --     return
+    -- end
+    if event.setting ~= 'rgb-default-lamps-lightSize' then
+        return
+    end
+    local copied = {}
+    for k, v in pairs(global.rgb_default_lamps) do
+        copied[k] = v
+    end
+    if event.setting == 'rgb-default-lamps-lightSize' then
+        for _, lamp in pairs(copied) do
+            if lamp.light then
+                rendering.destroy(lamp.light)
+                lamp.light = createLight(lamp.lamp)
+            end
+        end
+    end
+end
+
 script.on_init(function()
     if not global.rgb_default_lamps then
         global.rgb_default_lamps = {}
@@ -152,6 +177,7 @@ end)
 script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died, defines.events.script_raised_destroy}, onEntityDeleted)
 script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity, defines.events.script_raised_built}, onEntityCreated);
 script.on_configuration_changed(onSettingsChanged)
+script.on_event({defines.events.on_runtime_mod_setting_changed}, onRTSettingChanged)
 
 script.on_event(defines.events.on_tick, function(event)
     if event.tick % settings.global['rgb-default-lamps-nthTick'].value > 0 then

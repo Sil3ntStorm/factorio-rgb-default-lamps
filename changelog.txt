@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.1146
+Date: 2021-12-05
+
+  Bugfixes:
+    - Limit the valid signal range to 2-255, as 1 is interpreted as 255 by Factorio.
+  Features:
+    - Add option to configure the glow radius of the lamps.
+    - Hopefully fix an issue destroying lamps that the player did not place.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.7.1145
 Date: 2021-11-02
 
