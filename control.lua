@@ -81,6 +81,10 @@ local function initEntity(entity)
 end
 
 local function cleanupEntity(destroyed_unit_number)
+    if destroyed_unit_number == nil or global.rgb_default_lamps[destroyed_unit_number] == nil then
+        log('cleanupEntity called with invalid / untracked entity')
+        return
+    end
     if global.rgb_default_lamps[destroyed_unit_number].light then
         rendering.destroy(global.rgb_default_lamps[destroyed_unit_number].light)
     end
@@ -145,8 +149,8 @@ script.on_init(function()
     log('Tracking ' .. #global.rgb_default_lamps .. ' existing lamps')
 end)
 
-script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, onEntityDeleted)
-script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity}, onEntityCreated);
+script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died, defines.events.script_raised_destroy}, onEntityDeleted)
+script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity, defines.events.script_raised_built}, onEntityCreated);
 script.on_configuration_changed(onSettingsChanged)
 
 script.on_event(defines.events.on_tick, function(event)
