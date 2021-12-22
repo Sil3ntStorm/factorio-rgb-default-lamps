@@ -105,8 +105,11 @@ local function cleanupEntity(destroyed_unit_number)
 end
 
 local function onEntityCreated(event)
-    if (event.created_entity.valid and event.created_entity.name == 'small-lamp') then
+    if (event.created_entity and event.created_entity.valid and event.created_entity.name == 'small-lamp') then
         initEntity(event.created_entity)
+    elseif (event.entity and event.entity.valid and event.entity.name == 'small-lamp') then
+        -- script_raised_built
+        initEntity(event.entity)
     end
 end
 
