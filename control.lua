@@ -51,6 +51,13 @@ local function processLamp(lamp)
     if not lamp or not lamp.valid then
         return
     end
+    if settings.global['rgb-default-lamps-alwaysEnabled'].value == false then
+        local ctrl = lamp.get_control_behavior()
+        if ctrl and ctrl.disabled then
+            updateLight(global.rgb_default_lamps[lamp.unit_number], -1, -1, -1)
+            return
+        end
+    end
     if not lamp.is_connected_to_electric_network() then
         updateLight(global.rgb_default_lamps[lamp.unit_number], -1, -1, -1)
         return
@@ -211,19 +218,21 @@ local function onRTSettingChanged(event)
     -- if strsub(event.setting, 0, 18) ~= 'rgb-default-lamps-' then
     --     return
     -- end
-    if event.setting ~= 'rgb-default-lamps-lightSize' then
+    if event.setting ~= 'rgb-default-lamps-lightSize' and event.setting ~= 'rgb-default-lamps-alwaysEnabled' then
         return
     end
     local copied = {}
     for k, v in pairs(global.rgb_default_lamps) do
         copied[k] = v
     end
-    if event.setting == 'rgb-default-lamps-lightSize' then
-        for _, lamp in pairs(copied) do
+    for _, lamp in pairs(copied) do
+        if event.setting == 'rgb-default-lamps-lightSize' then
             if lamp.light then
                 rendering.destroy(lamp.light)
                 lamp.light = createLight(lamp.lamp)
             end
+        elseif event.setting == 'rgb-default-lamps-alwaysEnabled' then
+            processLamp(lamp.lamp)
         end
     end
 end

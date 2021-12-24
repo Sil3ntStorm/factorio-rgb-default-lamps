@@ -28,6 +28,12 @@ data:extend({
         maximum_value = 15
     },
     {
+        name = 'rgb-default-lamps-alwaysEnabled',
+        type = 'bool-setting',
+        setting_type = 'runtime-global',
+        default_value = true
+    },
+    {
         name = 'rgb-default-lamps-invisSub',
         type = 'bool-setting',
         setting_type = 'startup',

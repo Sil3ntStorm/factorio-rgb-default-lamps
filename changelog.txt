@@ -5,6 +5,7 @@ Date: 2021-12-24
   Features:
     - Ability to upgrade from pipes to lamps, and downgrade from lamps to pipes. Ctrl + U by default.
       Drag to upgrade, Shift + Drag to downgrade.
+    - Optionally honor the enabled condition of lamps (default off).
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.1146
