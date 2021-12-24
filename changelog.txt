@@ -1,6 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.9.1150
+Date: 2021-12-24
+
+  Features:
+    - Ability to upgrade from pipes to lamps, and downgrade from lamps to pipes. Ctrl + U by default.
+      Drag to upgrade, Shift + Drag to downgrade.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.8.1146
-Date: 2021-12-05
+Date: 2021-12-22
 
   Bugfixes:
     - Limit the valid signal range to 2-255, as 1 is interpreted as 255 by Factorio.

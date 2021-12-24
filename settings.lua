@@ -39,4 +39,10 @@ data:extend({
         setting_type = 'startup',
         default_value = false
     },
+    {
+        name = 'rgb-default-lamps-upgradePipes',
+        type = 'bool-setting',
+        setting_type = 'startup',
+        default_value = false
+    },
 })

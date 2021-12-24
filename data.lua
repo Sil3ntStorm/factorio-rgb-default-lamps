@@ -56,3 +56,73 @@ pole.connection_points = {
     }
 }
 data:extend{pole}
+
+if settings.startup['rgb-default-lamps-upgradePipes'].value then
+    data:extend{
+        {
+            type = 'custom-input',
+            name = 'rgb-default-lamp-toggle-upgrade',
+            key_sequence = 'CONTROL + U',
+            action = 'spawn-item',
+            item_to_spawn = 'rgb-default-lamp-upgplan',
+            technology_to_unlock = 'optics',
+        },
+        {
+            type = 'selection-tool',
+            name = 'rgb-default-lamp-upgplan',
+            icon = '__base__/graphics/icons/shortcut-toolbar/mip/new-upgrade-planner-x32-white.png',
+            icon_size = 32,
+            flags = {'only-in-cursor', 'hidden', 'spawnable'},
+            stack_size = 1,
+            stackable = false,
+            toggleable = false,
+            show_in_library = false,
+            subgroup = 'tool',
+            selection_mode = {'buildable-type', 'avoid-rolling-stock'},
+            selection_color = { g = 1, b = 1 },
+            selection_cursor_box_type = 'entity',
+            entity_filter_mode = 'whitelist',
+            entity_type_filters = {'pipe'},
+            alt_selection_mode = {'buildable-type', 'avoid-rolling-stock'},
+            alt_selection_color = { r = 1 },
+            alt_selection_cursor_box_type = 'entity',
+            alt_entity_filter_mode = 'whitelist',
+            alt_entity_type_filters = {'lamp'},
+        },
+        {
+            type = 'shortcut',
+            name = 'rgb-default-lamp-upgrade',
+            associated_control_input = 'rgb-default-lamp-toggle-upgrade',
+            action = 'spawn-item',
+            item_to_spawn = 'rgb-default-lamp-upgplan',
+            technology_to_unlock = 'optics',
+            icon =
+            {
+                filename = "__base__/graphics/icons/shortcut-toolbar/mip/new-upgrade-planner-x32-white.png",
+                priority = "extra-high-no-scale",
+                size = 32,
+                scale = 0.5,
+                mipmap_count = 2,
+                flags = {"gui-icon"}
+            },
+            small_icon =
+            {
+                filename = "__base__/graphics/icons/shortcut-toolbar/mip/new-upgrade-planner-x24-white.png",
+                priority = "extra-high-no-scale",
+                size = 24,
+                scale = 0.5,
+                mipmap_count = 2,
+                flags = {"gui-icon"}
+            },
+            disabled_small_icon =
+            {
+                filename = "__base__/graphics/icons/shortcut-toolbar/mip/new-upgrade-planner-x24-white.png",
+                priority = "extra-high-no-scale",
+                size = 24,
+                scale = 0.5,
+                mipmap_count = 2,
+                flags = {"gui-icon"}
+            }
+        }
+    }
+end

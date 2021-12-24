@@ -126,6 +126,74 @@ local function onEntityDeleted(event)
     end
 end
 
+local function connectNeighbor(entity)
+    if (entity.name == 'entity-ghost' and entity.ghost_name ~= 'small-lamp') then
+        return
+    end
+    if (entity.name ~= 'entity-ghost' and entity.name ~= 'small-lamp') then
+        return
+    end
+    local result = entity.surface.find_entities_filtered({name='small-lamp', position=entity.position, radius=1.0})
+    for _, found in pairs(result) do
+        local ok = entity.connect_neighbour({
+            wire = defines.wire_type.green,
+            target_entity = found,
+        })
+    end
+    result = entity.surface.find_entities_filtered({ghost_name='small-lamp', position=entity.position, radius=1.0})
+    for _, found in pairs(result) do
+        local ok = entity.connect_neighbour({
+            wire = defines.wire_type.green,
+            target_entity = found,
+        })
+    end
+end
+
+local function doUpgradePlanner(entity, plr)
+    if (entity.force ~= plr.force) then
+        return
+    end
+    local pos = entity.position
+    local frc = entity.force
+    local create_name = nil
+    if (entity.name == 'small-lamp') then
+        create_name = 'pipe'
+    elseif (entity.name == 'pipe') then
+        create_name = 'small-lamp'
+    else
+        return
+    end
+    if (entity.to_be_deconstructed()) then
+        entity.cancel_deconstruction(frc, plr)
+        return
+    end
+    entity.order_deconstruction(frc, plr)
+    nEnt = entity.surface.create_entity{
+        name = 'entity-ghost',
+        position = pos,
+        force = frc,
+        player = plr,
+        inner_name = create_name,
+        expires = false,
+    }
+    if (create_name == 'small-lamp') then
+        connectNeighbor(nEnt)
+    end
+end
+
+local function onSelection(data)
+    if (data.item ~= 'rgb-default-lamp-upgplan' or not settings.startup['rgb-default-lamps-upgradePipes'].value) then
+        return
+    end
+    plr = game.get_player(data.player_index)
+    if (not plr.force.technologies['optics'].researched) then
+        return
+    end
+    for _, entity in pairs(data.entities) do
+        doUpgradePlanner(entity, plr)
+    end
+end
+
 local function onSettingsChanged(data)
     if data.mod_startup_settings_changed then
         local copied = {}
@@ -181,6 +249,7 @@ script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robo
 script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity, defines.events.script_raised_built}, onEntityCreated);
 script.on_configuration_changed(onSettingsChanged)
 script.on_event({defines.events.on_runtime_mod_setting_changed}, onRTSettingChanged)
+script.on_event({defines.events.on_player_selected_area, defines.events.on_player_alt_selected_area}, onSelection)
 
 script.on_event(defines.events.on_tick, function(event)
     if event.tick % settings.global['rgb-default-lamps-nthTick'].value > 0 then
