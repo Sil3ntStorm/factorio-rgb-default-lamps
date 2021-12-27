@@ -142,14 +142,14 @@ local function connectNeighbor(entity)
     end
     local result = entity.surface.find_entities_filtered({name='small-lamp', position=entity.position, radius=1.0})
     for _, found in pairs(result) do
-        local ok = entity.connect_neighbour({
+        entity.connect_neighbour({
             wire = defines.wire_type.green,
             target_entity = found,
         })
     end
     result = entity.surface.find_entities_filtered({ghost_name='small-lamp', position=entity.position, radius=1.0})
     for _, found in pairs(result) do
-        local ok = entity.connect_neighbour({
+        entity.connect_neighbour({
             wire = defines.wire_type.green,
             target_entity = found,
         })
@@ -208,8 +208,13 @@ local function onSettingsChanged(data)
             copied[k] = v
         end
         for _, lamp in pairs(copied) do
-            cleanupEntity(lamp.lamp.unit_number)
-            initEntity(lamp.lamp)
+            if (lamp.lamp and lamp.lamp.valid) then
+                cleanupEntity(lamp.lamp.unit_number)
+                initEntity(lamp.lamp)
+            else
+                cleanupEntity(_)
+                log('Invalid entity onSettingsChanged:' .. _)
+            end
         end
     end
 end
@@ -247,8 +252,7 @@ script.on_init(function()
     for _, surface in pairs(game.surfaces) do
         lamps = surface.find_entities_filtered({name='small-lamp'})
         for _, lamp in pairs(lamps) do
-            table.insert(global.rgb_default_tracked, lamp.unit_number)
-            global.rgb_default_lamps[lamp.unit_number] = {lamp = lamp, light = nil, glow = nil, pole = nil}
+            initEntity(lamp)
         end
     end
     log('Tracking ' .. #global.rgb_default_lamps .. ' existing lamps')
