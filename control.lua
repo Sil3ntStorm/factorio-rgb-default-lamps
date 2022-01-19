@@ -160,6 +160,7 @@ local function doUpgradePlanner(entity, plr)
     if (entity.force ~= plr.force) then
         return
     end
+    local sur = entity.surface
     local pos = entity.position
     local frc = entity.force
     local create_name = nil
@@ -167,7 +168,14 @@ local function doUpgradePlanner(entity, plr)
         create_name = 'pipe'
     elseif (entity.name == 'pipe') then
         create_name = 'small-lamp'
-    else
+    elseif (entity.name == 'entity-ghost') then
+        if (entity.ghost_name == 'pipe') then
+            create_name = 'small-lamp'
+        elseif (entity.ghost_name == 'small-lamp') then
+            create_name = 'pipe'
+        end
+    end
+    if not create_name then
         return
     end
     if (entity.to_be_deconstructed()) then
@@ -175,7 +183,7 @@ local function doUpgradePlanner(entity, plr)
         return
     end
     entity.order_deconstruction(frc, plr)
-    nEnt = entity.surface.create_entity{
+    nEnt = sur.create_entity{
         name = 'entity-ghost',
         position = pos,
         force = frc,
