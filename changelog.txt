@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.11.1160
+Date: 2022-06-17
+
+  Bugfixes:
+    - Fixed an issue that caused the most recently placed lamp to be ignored.
+    - Fixed lamps "constructed" by nano bots not being recognized.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.10.1153
 Date: 2022-01-20
 

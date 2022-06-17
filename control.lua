@@ -267,7 +267,7 @@ script.on_init(function()
 end)
 
 script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died, defines.events.script_raised_destroy}, onEntityDeleted)
-script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity, defines.events.script_raised_built}, onEntityCreated);
+script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity, defines.events.script_raised_built, defines.events.script_raised_revive}, onEntityCreated);
 script.on_configuration_changed(onSettingsChanged)
 script.on_event({defines.events.on_runtime_mod_setting_changed}, onRTSettingChanged)
 script.on_event({defines.events.on_player_selected_area, defines.events.on_player_alt_selected_area}, onSelection)
@@ -285,7 +285,7 @@ script.on_event(defines.events.on_tick, function(event)
         global.rgb_default_tracked = {}
     end
     local lastIt = global.rgb_default_lamps_last or 1
-    local target = math.min(#global.rgb_default_tracked, lastIt + settings.global['rgb-default-lamps-perTick'].value)
+    local target = math.min(#global.rgb_default_tracked, lastIt + settings.global['rgb-default-lamps-perTick'].value - 1)
     for i = lastIt, target, 1 do
         if global.rgb_default_lamps[global.rgb_default_tracked[i]] then
             processLamp(global.rgb_default_lamps[global.rgb_default_tracked[i]].lamp)

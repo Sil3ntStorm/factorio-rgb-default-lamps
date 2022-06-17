@@ -17,7 +17,7 @@ end
 function ArrayRemove(t, fnKeep)
     local j, n = 1, #t;
 
-    for i=1,n do
+    for i = 1, n do
         if (fnKeep(t, i, j)) then
             -- Move i's kept value to j's position, if it's not already there.
             if (i ~= j) then
