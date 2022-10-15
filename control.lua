@@ -210,6 +210,13 @@ local function onSelection(data)
 end
 
 local function onSettingsChanged(data)
+    local mc = data.mod_changes
+    if not mc or not mc['rgb-default-lamps'] then
+        return
+    end
+    if not mc['rgb-default-lamps'].old_version then
+        return
+    end
     if data.mod_startup_settings_changed then
         local copied = {}
         for k, v in pairs(global.rgb_default_lamps) do
@@ -292,7 +299,7 @@ script.on_event(defines.events.on_tick, function(event)
         end
     end
     target = target + 1
-    if target >= #global.rgb_default_tracked then
+    if target > #global.rgb_default_tracked then
         target = 1
     end
     global.rgb_default_lamps_last = target

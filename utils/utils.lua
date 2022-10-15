@@ -32,3 +32,14 @@ function ArrayRemove(t, fnKeep)
 
     return t;
 end
+
+function splitString(inp, sep)
+    if not sep then
+        sep = "."
+    end
+    local result = {}
+    for str in string.gmatch(inp, "([^" .. sep .. "]+)") do
+        table.insert(result, str)
+    end
+    return result
+end
